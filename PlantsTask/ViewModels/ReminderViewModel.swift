@@ -26,7 +26,7 @@ final class ReminderViewModel: ObservableObject {
     func addReminder(_ reminder: PlantReminder) {
         reminders.append(reminder)
         saveReminders()
-        PlantNotificationManager.shared.schedule(for: reminder)
+        rescheduleNotifications()
     }
 
     // MARK: - Update
@@ -36,24 +36,24 @@ final class ReminderViewModel: ObservableObject {
         }
         reminders[index] = updatedReminder
         saveReminders()
-        PlantNotificationManager.shared.schedule(for: updatedReminder)
+        rescheduleNotifications()
     }
 
     // MARK: - Delete
     func deleteReminder(id: UUID) {
         reminders.removeAll { $0.id == id }
         saveReminders()
-        PlantNotificationManager.shared.cancel(for: id)
+        rescheduleNotifications()
     }
 
     func deleteReminder(at offsets: IndexSet) {
         // Delete from the last index first so earlier indexes do not shift.
         for index in offsets.sorted(by: >) {
             guard reminders.indices.contains(index) else { continue }
-            let removed = reminders.remove(at: index)
-            PlantNotificationManager.shared.cancel(for: removed.id)
+            reminders.remove(at: index)
         }
         saveReminders()
+        rescheduleNotifications()
     }
 
     // MARK: - Daily Checkmark
@@ -84,16 +84,16 @@ final class ReminderViewModel: ObservableObject {
 
     // Re-books the upcoming notifications (keeps the every-2-days ones topped up).
     func rescheduleNotifications() {
-        PlantNotificationManager.shared.rescheduleAll(reminders)
+        PlantNotificationManager.shared.sync(with: reminders)
     }
-
     // The checkmarks start fresh when the calendar day changes.
     // Also called when the app returns to the foreground, in case it stayed open past midnight.
     func refreshForNewDay() {
         let today = Calendar.current.startOfDay(for: Date())
         let savedDate = UserDefaults.standard.object(forKey: progressDateKey) as? Date
 
-        guard savedDate == nil || !Calendar.current.isDate(savedDate!, inSameDayAs: today) else {
+        // Already refreshed today, nothing to do.
+        if let savedDate, Calendar.current.isDate(savedDate, inSameDayAs: today) {
             return
         }
 
