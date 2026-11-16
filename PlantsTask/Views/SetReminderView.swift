@@ -7,125 +7,99 @@ struct SetReminderView: View {
     private let reminder: PlantReminder?
 
     @State private var plantName: String
-    @State private var selectedRoom: String
-    @State private var selectedLight: String
-    @State private var selectedDays: String
-    @State private var selectedWater: String
-
-    private let green = Color(red: 0.16, green: 0.55, blue: 0.44)
+    @State private var selectedRoom: Room
+    @State private var selectedLight: Light
+    @State private var selectedDays: WateringFrequency
+    @State private var selectedWater: WaterAmount
 
     init(viewModel: ReminderViewModel, reminder: PlantReminder? = nil) {
         self.viewModel = viewModel
         self.reminder = reminder
         _plantName = State(initialValue: reminder?.plantName ?? "")
-        _selectedRoom = State(initialValue: reminder?.room ?? "Bedroom")
-        _selectedLight = State(initialValue: reminder?.light ?? "Full sun")
-        _selectedDays = State(initialValue: reminder?.wateringDays ?? "Every day")
-        _selectedWater = State(initialValue: reminder?.waterAmount ?? "20-50 ml")
+        _selectedRoom = State(initialValue: reminder?.room ?? .bedroom)
+        _selectedLight = State(initialValue: reminder?.light ?? .fullSun)
+        _selectedDays = State(initialValue: reminder?.wateringDays ?? .everyDay)
+        _selectedWater = State(initialValue: reminder?.waterAmount ?? .small)
+    }
+
+    private var isNameEmpty: Bool {
+        plantName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     var body: some View {
-        VStack(spacing: 22) {
-            // MARK: - Navigation Bar
-            HStack {
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(.white)
-                        .frame(width: 36, height: 36)
-                        .background(Color.white.opacity(0.12))
-                        .clipShape(Circle())
+        NavigationStack {
+            VStack(spacing: 22) {
+                // MARK: - Plant Name
+                HStack(spacing: 6) {
+                    Text("Plant Name")
+                    Rectangle()
+                        .fill(.secondary)
+                        .frame(width: 1, height: 14)
+                    TextField("Pothos", text: $plantName)
+                        .textInputAutocapitalization(.words)
+                        .foregroundStyle(.tint)
                 }
+                .font(.system(size: 16))
+                .padding(.horizontal, 16)
+                .frame(height: 44)
+                .background(.quaternary, in: Capsule())
 
-                Spacer()
-                Text(reminder == nil ? "Set Reminder" : "Edit Plant")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white)
-                Spacer()
-
-                Button {
-                    saveReminder()
-                } label: {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(width: 36, height: 36)
-                        .background(green)
-                        .clipShape(Circle())
+                // MARK: - Plant Settings
+                VStack(spacing: 0) {
+                    settingRow(icon: "location", title: "Room", selection: $selectedRoom)
+                    Divider()
+                    settingRow(icon: "sun.max", title: "Light", selection: $selectedLight)
                 }
-                .disabled(plantName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                .opacity(plantName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.5 : 1)
-            }
-            .padding(.horizontal, 4)
+                .padding(.horizontal, 18)
+                .background(.quaternary, in: RoundedRectangle(cornerRadius: 20))
 
-            // MARK: - Plant Name
-            HStack(spacing: 6) {
-                Text("Plant Name")
-                    .foregroundColor(.white)
-                Rectangle()
-                    .fill(Color.white.opacity(0.6))
-                    .frame(width: 1, height: 14)
-                TextField("Pothos", text: $plantName)
-                    .textInputAutocapitalization(.words)
-                    .foregroundColor(.white)
-            }
-            .font(.system(size: 16))
-            .padding(.horizontal, 16)
-            .frame(height: 44)
-            .background(Color.white.opacity(0.09))
-            .clipShape(Capsule())
+                // MARK: - Water Settings
+                VStack(spacing: 0) {
+                    settingRow(icon: "drop", title: "Watering Days", selection: $selectedDays)
+                    Divider()
+                    settingRow(icon: "drop", title: "Water", selection: $selectedWater)
+                }
+                .padding(.horizontal, 18)
+                .background(.quaternary, in: RoundedRectangle(cornerRadius: 20))
 
-            // MARK: - Plant Settings
-            VStack(spacing: 0) {
-                settingRow(icon: "location", title: "Room", selection: $selectedRoom,
-                           options: ["Bedroom", "Living Room", "Kitchen"])
-                Divider().overlay(Color.white.opacity(0.08))
-                settingRow(icon: "sun.max", title: "Light", selection: $selectedLight,
-                           options: ["Full sun", "Partial sun", "Shade"])
-            }
-            .padding(.horizontal, 18)
-            .background(Color.white.opacity(0.09))
-            .clipShape(RoundedRectangle(cornerRadius: 20))
-
-            // MARK: - Water Settings
-            VStack(spacing: 0) {
-                settingRow(icon: "drop", title: "Watering Days", selection: $selectedDays,
-                           options: ["Every day", "Every 2 days", "Every week"])
-                Divider().overlay(Color.white.opacity(0.08))
-                settingRow(icon: "drop", title: "Water", selection: $selectedWater,
-                           options: ["20-50 ml", "50-100 ml", "100-200 ml"])
-            }
-            .padding(.horizontal, 14)
-            .background(Color.white.opacity(0.09))
-            .clipShape(RoundedRectangle(cornerRadius: 20))
-
-            // MARK: - Delete
-            if reminder != nil {
-                Button(role: .destructive) {
-                    if let reminder {
+                // MARK: - Delete (Liquid Glass)
+                if let reminder {
+                    Button(role: .destructive) {
                         viewModel.deleteReminder(id: reminder.id)
+                        dismiss()
+                    } label: {
+                        Text("Delete Reminder")
+                            .font(.system(size: 14, weight: .medium))
+                            .frame(maxWidth: .infinity)
                     }
-                    dismiss()
-                } label: {
-                    Text("Delete Reminder")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(.red)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 46)
-                        .background(Color.white.opacity(0.09))
-                        .clipShape(Capsule())
+                    .buttonStyle(.glass)
+                    .buttonBorderShape(.capsule)
+                    .controlSize(.large)
+                    .tint(.red)
+                    .padding(.top, 8)
                 }
-                .padding(.top, 8)
-            }
 
-            Spacer(minLength: 0)
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 18)
+            .navigationTitle(reminder == nil ? "Set Reminder" : "Edit Plant")
+            .navigationBarTitleDisplayMode(.inline)
+            // Toolbar buttons get the Liquid Glass look automatically.
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(role: .close) {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(role: .confirm) {
+                        saveReminder()
+                    }
+                    .disabled(isNameEmpty)
+                }
+            }
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 18)
-        .background(Color(red: 0.11, green: 0.11, blue: 0.12).ignoresSafeArea())
-        .preferredColorScheme(.dark)
     }
 
     // MARK: - Save
@@ -153,12 +127,11 @@ struct SetReminderView: View {
         dismiss()
     }
 
-    // MARK: - Reusable Setting Row
-    private func settingRow(
+    // MARK: - Reusable Setting Row (works with any enum option)
+    private func settingRow<Option: PlantOption>(
         icon: String,
         title: String,
-        selection: Binding<String>,
-        options: [String]
+        selection: Binding<Option>
     ) -> some View {
         HStack(spacing: 8) {
             Image(systemName: icon)
@@ -167,19 +140,24 @@ struct SetReminderView: View {
                 .font(.system(size: 16))
             Spacer()
             Picker(title, selection: selection) {
-                ForEach(options, id: \.self) { option in
-                    Text(option).tag(option)
+                ForEach(Array(Option.allCases)) { option in
+                    Text(option.rawValue).tag(option)
                 }
             }
             .font(.system(size: 12))
-            .tint(.gray)
+            .tint(.secondary)
         }
-        .foregroundColor(.white)
         .frame(height: 42)
     }
 }
 
-#Preview {
+#Preview("Light") {
     SetReminderView(viewModel: ReminderViewModel())
+        .tint(Color("PlantGreen"))
+}
+
+#Preview("Dark") {
+    SetReminderView(viewModel: ReminderViewModel())
+        .tint(Color("PlantGreen"))
         .preferredColorScheme(.dark)
 }

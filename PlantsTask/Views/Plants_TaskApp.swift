@@ -17,7 +17,8 @@ struct Plants_TaskApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .preferredColorScheme(.dark)
+                // Follows the system Light / Dark mode automatically.
+                .tint(Color("PlantGreen"))
         }
     }
 }

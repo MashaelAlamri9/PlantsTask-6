@@ -23,7 +23,7 @@ struct ContentView: View {
 
                 Spacer()
 
-                Image("plant_placeholder")
+                Image("plant_icon")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 320, height: 330)
@@ -36,28 +36,28 @@ struct ContentView: View {
 
                     Text("Now all your plants will be in one place and we will help you take care of them :) 🪴")
                         .font(.system(size: 20))
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 20)
                 }
 
                 Spacer()
 
+                // Liquid Glass button
                 Button {
                     showReminder = true
                 } label: {
                     Text("Set Plant Reminder")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 20)
-                        .background(Color(red: 0.20, green: 0.50, blue: 0.40))
-                        .cornerRadius(35)
+                        .padding(.vertical, 10)
                 }
+                .buttonStyle(.glassProminent)
+                .buttonBorderShape(.capsule)
+                .controlSize(.large)
                 .padding(.horizontal, 45)
                 .padding(.bottom, 40)
             }
-            .background(Color(.systemBackground))
             .onAppear {
                 // Plants are saved, so skip the onboarding screen on relaunch.
                 if !viewModel.reminders.isEmpty {
@@ -81,14 +81,18 @@ struct ContentView: View {
             }) {
                 SetReminderView(viewModel: viewModel)
                     .presentationDetents([.large])
-                    .presentationDragIndicator(.hidden)
-                    .presentationBackground(Color(red: 0.11, green: 0.11, blue: 0.12))
             }
         }
     }
 }
 
-#Preview {
+#Preview("Light") {
     ContentView()
+        .tint(Color("PlantGreen"))
+}
+
+#Preview("Dark") {
+    ContentView()
+        .tint(Color("PlantGreen"))
         .preferredColorScheme(.dark)
 }
