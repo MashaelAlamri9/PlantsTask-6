@@ -91,6 +91,8 @@ struct SetReminderView: View {
                     Button(role: .close) {
                         dismiss()
                     }
+                    .tint(.primary)
+
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(role: .confirm) {
